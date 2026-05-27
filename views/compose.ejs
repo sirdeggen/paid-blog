@@ -1,10 +1,94 @@
 <%- include('partials/header'); %>
-<h1>Compose</h1>
-<form action="/compose" method="post">
-    <label class="form-label">Title</label>
-    <input type="text" name="postTitle" class="form-control">
-    <label class="form-label">Post</label>
-    <textarea cols="30" rows="10" class="form-control" name="postBody"></textarea>
-    <button type="submit" class="btn btn-primary publish">Publish</button>
-</form>
+
+<div class="max-w-3xl mx-auto">
+  <div class="mb-8">
+    <h1 class="font-serif-custom text-5xl font-semibold tracking-tighter">New post</h1>
+    <p class="mt-3 text-lg text-slate-600 dark:text-slate-300">Write something worth reading. Readers unlock the full piece with a small one-time payment.</p>
+  </div>
+
+  <form id="composeForm" action="/compose" method="post" onsubmit="return syncQuillBeforeSubmit()">
+    <div class="mb-8">
+      <label for="postTitle" class="block text-xs font-semibold tracking-widest uppercase text-slate-500 dark:text-slate-400 mb-2">Story title</label>
+      <input type="text" id="postTitle" name="postTitle" required
+             class="w-full text-3xl sm:text-4xl font-serif-custom font-semibold tracking-tight bg-transparent border-0 border-b border-slate-200 dark:border-slate-800 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-0 px-1 py-3 placeholder:text-slate-400 outline-none transition"
+             placeholder="The headline your readers will remember">
+    </div>
+
+    <div>
+      <div class="flex items-center justify-between mb-2">
+        <label class="block text-xs font-semibold tracking-widest uppercase text-slate-500 dark:text-slate-400">The story</label>
+        <span class="text-[10px] text-slate-400">Paste images • Add headings • Links</span>
+      </div>
+
+      <!-- Quill mounts here -->
+      <div id="editor" class="quill-container bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden"></div>
+
+      <input type="hidden" name="postBody" id="postBodyInput">
+    </div>
+
+    <div class="mt-3 text-xs text-slate-500 dark:text-slate-400">
+      Images become part of the post. Write clearly.
+    </div>
+
+    <div class="mt-8 flex items-center gap-4">
+      <button type="submit"
+              class="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 transition px-8 py-4 text-white font-semibold text-base shadow-sm">
+        Publish
+      </button>
+      <a href="/" class="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 px-2">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  let quillInstance = null;
+
+  function initQuill() {
+    const editorEl = document.getElementById('editor');
+    if (!editorEl || typeof Quill === 'undefined') return;
+
+    quillInstance = new Quill(editorEl, {
+      theme: 'snow',
+      placeholder: 'Begin writing here. Paste photos directly from your clipboard, or click the image icon in the toolbar to embed a photo by URL. Use headings to structure your piece.',
+      modules: {
+        toolbar: [
+          [{ header: [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          ['blockquote', 'code-block'],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          ['link', 'image'],
+          ['clean']
+        ]
+      }
+    });
+
+    // Make the editor feel roomy
+    const editorRoot = quillInstance.root;
+    editorRoot.style.minHeight = '320px';
+    editorRoot.style.fontSize = '1.05rem';
+    editorRoot.style.lineHeight = '1.75';
+    editorRoot.style.padding = '1.25rem 1.5rem';
+  }
+
+  function syncQuillBeforeSubmit() {
+    if (!quillInstance) return false;
+    const htmlContent = quillInstance.root.innerHTML.trim();
+    document.getElementById('postBodyInput').value = htmlContent;
+
+    const title = document.getElementById('postTitle').value.trim();
+    if (!title) {
+      alert('Please add a title for your story.');
+      return false;
+    }
+    return true;
+  }
+
+  // Initialize once DOM + Quill are ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initQuill);
+  } else {
+    initQuill();
+  }
+</script>
+
 <%- include('partials/footer'); %>

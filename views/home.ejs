@@ -1,9 +1,65 @@
 <%- include('partials/header'); %>
-<h1>Home</h1>
-<p><%= homeStartingContent %></p>
-<% posts.forEach(post => { %>
-   <h2><%= post.postTitle %></h2>
-   <p class="postBody"><%= _.truncate(post.postBody, {'length': 100, 'omission': ' ...'}) %></p>
-   <a href="/posts/<%= post._id %>">Read More</a>
-<% }) %>
+
+<!-- Hero / Welcome -->
+<div class="max-w-3xl">
+  <div class="inline-flex items-center gap-2 rounded-full border border-slate-200 dark:border-slate-800 px-3 py-1 text-xs tracking-[2px] uppercase text-slate-500 dark:text-slate-400 mb-6">Personal • No ads • Self-hosted</div>
+
+  <h1 class="font-serif-custom text-6xl sm:text-7xl font-semibold tracking-tighter leading-none text-balance">
+    Brain Dumps.
+  </h1>
+
+  <p class="mt-6 text-xl text-slate-600 dark:text-slate-300 max-w-2xl">
+    A personal collection of writing. No subscriptions, no ads — just a small one-time payment to unlock any piece permanently.
+  </p>
+
+  <div class="mt-8 flex flex-wrap gap-3">
+    <a href="/compose" class="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 transition px-6 py-3.5 text-white font-semibold shadow-sm">
+      New post
+    </a>
+    <a href="#dumps" class="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-900 px-6 py-3.5 font-medium transition">
+      Browse dumps
+    </a>
+  </div>
+  <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">Unlock any piece for a few cents in Bitcoin.</p>
+</div>
+
+<!-- Brain dumps feed -->
+<div id="dumps" class="mt-20">
+  <div class="flex items-baseline justify-between mb-6">
+    <h2 class="text-sm uppercase tracking-[3px] font-semibold text-slate-500 dark:text-slate-400">Latest</h2>
+    <% if (posts.length > 0) { %>
+      <span class="text-xs text-slate-400"><%= posts.length %> post<%= posts.length === 1 ? '' : 's' %></span>
+    <% } %>
+  </div>
+
+  <% if (posts.length === 0) { %>
+    <div class="rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 py-16 px-8 text-center">
+      <div class="mx-auto w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6v12m6-6H6" /></svg>
+      </div>
+      <p class="font-medium text-lg">Nothing published yet.</p>
+      <a href="/compose" class="mt-6 inline-block text-indigo-600 dark:text-indigo-400 font-medium hover:underline">Write the first post →</a>
+    </div>
+  <% } else { %>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <% posts.forEach(post => { %>
+        <a href="/posts/<%= post._id %>" class="group block rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-7 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md transition-all duration-200">
+          <h3 class="font-serif-custom text-2xl font-semibold tracking-tight leading-tight text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+            <%= post.postTitle %>
+          </h3>
+          <p class="mt-3 text-[15px] leading-relaxed text-slate-600 dark:text-slate-300 line-clamp-3">
+            <%= post.excerpt %>
+          </p>
+          <div class="mt-6 text-sm">
+            <span class="inline-flex items-center gap-1.5 font-medium text-indigo-600 dark:text-indigo-400 group-hover:gap-2 transition-all">
+              Read the full piece
+              <span aria-hidden="true">→</span>
+            </span>
+          </div>
+        </a>
+      <% }) %>
+    </div>
+  <% } %>
+</div>
+
 <%- include('partials/footer'); %>
