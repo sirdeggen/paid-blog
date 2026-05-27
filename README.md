@@ -1,122 +1,124 @@
-# Paid Blog
+# Paid Blog — Custom Ghost (Node.js + Middleware)
 
-A Ghost-powered blog ready for paid content, newsletters, and membership subscriptions.
+This project runs **Ghost as a library** inside your own Node.js application.  
+You get the full power of Ghost (admin UI, frontend, Members, API, themes) while having complete control to inject custom middleware, routes, payment logic, etc.
 
-This project runs the **official Ghost** platform using Docker Compose with SQLite for simple, zero-dependency local development.
+## Architecture
 
-## Why Ghost?
+- **Custom Node.js server** (`index.js`) that boots Ghost programmatically using the `ghost` package.
+- **Knex + SQLite** for the database (simple, file-based, no separate DB container needed for development).
+- **Dockerfile** builds *your* server (not the official Ghost image).
+- **docker-compose.yml** defines the app service + a persistent volume for the SQLite database and all Ghost content.
 
-Ghost is the leading open-source publishing platform with first-class support for:
-
-- Beautiful native themes (including the excellent Casper theme)
-- Built-in **Members** feature with Stripe integration for paid subscriptions
-- Newsletters & email
-- Full admin UI, rich editor, and content API
-- Knex.js + SQLite (dev) or MySQL (production)
-
-This is the real thing — not a custom clone.
+This gives you a clean place to add things like:
+- Custom authentication / payment middleware
+- Additional API routes
+- Request logging, feature flags, A/B testing
+- Integration with your own services
 
 ## Quick Start
 
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
 
-Then open [http://localhost:3000](http://localhost:3000)
+Then open [http://localhost:3000](http://localhost:3000).
 
-On first visit you will be taken through Ghost's setup wizard:
-1. Create your owner/admin account
-2. Name your site
-3. (Optional) Connect to Stripe later for paid memberships
+On first run you will see Ghost's standard setup wizard to create the admin account.
 
-## Stack
+## Where to Add Your Middleware
 
-| Component     | Technology                          |
-|---------------|-------------------------------------|
-| Platform      | Ghost 5 (official Docker image)     |
-| Database      | SQLite (via Knex.js)                |
-| Web Server    | Node.js (inside Ghost container)    |
-| Port          | 3000 (mapped to Ghost's 2368)       |
+Open [index.js](/index.js) and look for this section:
+
+```js
+// ============================================================
+// CUSTOM MIDDLEWARE & ROUTES — ADD YOUR CODE BELOW THIS LINE
+// ============================================================
+```
+
+Examples already included:
+- Request logging
+- Custom `/health` endpoint
+- Placeholder comments for future payment/subscription middleware
 
 ## Project Structure
 
 ```
 .
-├── docker-compose.yml
+├── Dockerfile                 # Builds your custom Ghost Node.js app
+├── docker-compose.yml         # App service + persistent volume for SQLite
+├── index.js                   # Your server — Ghost + custom middleware lives here
+├── package.json
 ├── .env.example
-├── README.md
-├── content/               # ← Ghost data lives here (SQLite, images, themes, logs)
-│   └── .gitkeep
-└── .gitignore
+├── content/                   # Created at runtime (SQLite DB, images, themes)
+│   └── data/ghost.db
+└── README.md
 ```
 
-The `content/` directory is where Ghost stores everything persistent:
-- `content/data/ghost.db` — your SQLite database
-- `content/images/` — uploaded images
-- `content/themes/` — custom themes
-- `content/logs/`
+## Database (SQLite + Knex)
 
-## Environment Variables
+Ghost uses Knex.js under the hood. In this setup we explicitly configure it to use SQLite:
 
-Copy `.env.example` to `.env` if you want to customize settings:
-
-```bash
-cp .env.example .env
+```js
+database__client=sqlite3
+database__connection__filename=/app/content/data/ghost.db
 ```
 
-Key variables:
+The database file lives inside the `ghost_content` Docker volume. It will survive container restarts and `docker compose down`.
 
-- `url` — Public URL of the site (very important for admin, RSS, emails)
-- `NODE_ENV` — `development` or `production`
+If you ever want to switch to MySQL/MariaDB (recommended for production), you can:
+1. Add a `db` service in docker-compose.yml
+2. Change the `database__*` environment variables
+3. Run Ghost's migrations
 
-## Working With Content
+## Adding Custom Middleware
 
-After the initial setup wizard:
+Because you own the Express app that mounts `ghostServer.rootApp`, you can insert middleware anywhere:
 
-1. Go to **http://localhost:3000/ghost**
-2. Log in with the account you created
-3. Create your first posts using Ghost's excellent editor (Markdown + rich cards supported)
+- Before Ghost (your routes take precedence)
+- After Ghost (catch-all, custom error handling)
+- Around specific paths (`/members`, `/api`, etc.)
 
-You can create a placeholder post during onboarding or right after.
+Example future payment check:
 
-## Adding Paid Memberships (The Whole Point)
-
-Ghost has native support for paid subscriptions:
-
-1. In the admin, go to **Settings → Membership**
-2. Connect your Stripe account (test mode works great locally)
-3. Create paid tiers (e.g., "Monthly Supporter", "Annual")
-4. Mark posts as "Members-only" or "Paid members only"
-
-This project is intentionally set up under the name `paid-blog` because Ghost + Stripe is one of the best stacks available for running a paid publication.
+```js
+app.use('/api/paid-content', async (req, res, next) => {
+  const hasValidSubscription = await checkSubscription(req);
+  if (!hasValidSubscription) return res.status(403).send('Payment required');
+  next();
+});
+```
 
 ## Useful Commands
 
 ```bash
-# Start
-docker compose up -d
+# Start / rebuild
+docker compose up -d --build
 
-# View logs
-docker compose logs -f ghost
+# Follow logs
+docker compose logs -f app
 
-# Stop
+# Stop everything
 docker compose down
 
-# Stop and remove the SQLite database + all content (nuclear option)
+# Nuclear reset (deletes the SQLite database and all content)
 docker compose down -v
 rm -rf content
 ```
 
-## Production Notes
+## Production Considerations
 
-When you're ready for production:
-
-- Switch to MySQL/MariaDB (Ghost strongly recommends it at scale)
+- Switch from SQLite to MySQL/MariaDB
 - Set `NODE_ENV=production`
-- Use a real domain + HTTPS (Ghost works great behind Caddy, Nginx, or Traefik)
-- Set up proper email (Mailgun, SES, etc.)
-- Consider Ghost's official hosting (ghost.org) if you don't want to manage infra
+- Configure proper `url` and email transport
+- Consider running Ghost behind a reverse proxy (Caddy, Traefik, Nginx) for TLS
+- Use a multi-stage Dockerfile for smaller images
+
+## Why This Approach?
+
+Using the official `ghost` Docker image is great for simple blogs.  
+Running Ghost inside your own Node.js process (this setup) is the correct path when you need to extend it with custom business logic, payments, or integrations — exactly what a "paid blog" usually requires.
 
 ## License
 
-MIT (Ghost itself is MIT licensed)
+MIT

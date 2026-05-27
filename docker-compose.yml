@@ -1,18 +1,26 @@
 services:
-  ghost:
-    image: ghost:5-alpine
-    container_name: paid-blog-ghost
+  app:
+    build: .
+    container_name: paid-blog-app
     restart: unless-stopped
     ports:
-      - "3000:2368"
-    volumes:
-      - ./content:/var/lib/ghost/content
+      - "3000:3000"
     environment:
       - NODE_ENV=development
+      - PORT=3000
       - url=http://localhost:3000
+      # SQLite via Knex (Ghost default when no MySQL is configured)
+      - database__client=sqlite3
+      - database__connection__filename=/app/ghost/content/data/ghost.db
+    volumes:
+      # Persistent storage for SQLite database, images, themes, etc.
+      - ghost_content:/app/ghost/content
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:2368/"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 40s
+      start_period: 90s
+
+volumes:
+  ghost_content:
