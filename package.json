@@ -1,15 +1,14 @@
 {
   "name": "paid-blog",
   "version": "1.0.0",
-  "description": "Custom Ghost blog with injectable middleware using Node.js + Knex + SQLite",
-  "main": "index.js",
+  "description": "Custom Express app that uses Ghost programmatically (for middleware, payments, etc.)",
+  "main": "server.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "dependencies": {
-    "express": "^4.21.0",
-    "ghost": "^5.130.0"
+    "express": "^4.21.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.0"
