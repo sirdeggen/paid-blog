@@ -1,20 +1,32 @@
 services:
-  app:
-    build: .
-    container_name: paid-blog-app
+  mongo:
+    image: mongo:7
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "27017:27017"
     environment:
-      - NODE_ENV=development
-      - PORT=3000
-      - url=http://localhost:3000
-      # SQLite via Knex (Ghost default)
-      - database__client=sqlite3
-      - database__connection__filename=/app/ghost/content/data/ghost.db
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
     volumes:
-      # SQLite database + images + themes persist here
-      - ghost_content:/app/ghost/content
+      - mongo-data:/data/db
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    environment:
+      MONGO_URI: mongodb://admin:password@mongo:27017/blogDB?authSource=admin
+      PORT: 3000
+      SERVER_PRIVATE_KEY: ${SERVER_PRIVATE_KEY:-}
+      BSV_NETWORK: ${BSV_NETWORK:-main}
+      BSV_STORAGE_URL: ${BSV_STORAGE_URL:-https://store-us-1.bsvb.tech}
+      POST_PRICE_SATS: ${POST_PRICE_SATS:-10}
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "3000:3000"
 
 volumes:
-  ghost_content:
+  mongo-data:
