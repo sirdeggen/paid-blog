@@ -1,7 +1,6 @@
 # Blog Slog Vlog
 
 ![GitHub](https://img.shields.io/github/license/efecollins/blog-template-ejs)
-![Twitter Follow](https://img.shields.io/twitter/follow/EfeCollins7?color=blue&style=social)
 
 A modern personal blog with pay-per-post Bitcoin SV micropayments.
 
