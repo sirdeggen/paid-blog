@@ -1,0 +1,18 @@
+services:
+  ghost:
+    image: ghost:5-alpine
+    container_name: paid-blog-ghost
+    restart: unless-stopped
+    ports:
+      - "3000:2368"
+    volumes:
+      - ./content:/var/lib/ghost/content
+    environment:
+      - NODE_ENV=development
+      - url=http://localhost:3000
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:2368/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
